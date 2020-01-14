@@ -2,11 +2,10 @@ import  os
 import  numpy as np
 import  tensorflow as tf
 from    tensorflow import keras
-from    scipy.misc import toimage
 import  glob
-from    gan import Generator, Discriminator
+from    ch13.gan import Generator, Discriminator
 
-from    dataset import make_anime_dataset
+from    ch13.dataset import make_anime_dataset
 
 
 def save_result(val_out, val_block_size, image_path, color_mode):
@@ -37,7 +36,9 @@ def save_result(val_out, val_block_size, image_path, color_mode):
 
     if final_image.shape[2] == 1:
         final_image = np.squeeze(final_image, axis=2)
-    toimage(final_image).save(image_path)
+
+    from PIL import Image
+    Image.fromarray(final_image).save(image_path)
 
 
 def celoss_ones(logits):
@@ -98,8 +99,8 @@ def main():
     # 获取数据集路径
     # C:\Users\z390\Downloads\anime-faces
     # r'C:\Users\z390\Downloads\faces\*.jpg'
-    img_path = glob.glob(r'C:\Users\z390\Downloads\anime-faces\*\*.jpg') + \
-        glob.glob(r'C:\Users\z390\Downloads\anime-faces\*\*.png')
+    img_path = glob.glob(r'F:\faces\*\*.jpg') + \
+        glob.glob(r'F:\faces\*\*.png')
     # img_path = glob.glob(r'C:\Users\z390\Downloads\getchu_aligned_with_label\GetChu_aligned2\*.jpg')
     # img_path.extend(img_path2)
     print('images num:', len(img_path))
@@ -121,9 +122,9 @@ def main():
     g_optimizer = keras.optimizers.Adam(learning_rate=learning_rate, beta_1=0.5)
     d_optimizer = keras.optimizers.Adam(learning_rate=learning_rate, beta_1=0.5)
 
-    generator.load_weights('generator.ckpt')
-    discriminator.load_weights('discriminator.ckpt')
-    print('Loaded chpt!!')
+    # generator.load_weights('generator.ckpt')
+    # discriminator.load_weights('discriminator.ckpt')
+    # print('Loaded chpt!!')
 
     d_losses, g_losses = [],[]
     for epoch in range(epochs): # 训练epochs次
@@ -147,22 +148,28 @@ def main():
         grads = tape.gradient(g_loss, generator.trainable_variables)
         g_optimizer.apply_gradients(zip(grads, generator.trainable_variables))
 
-        if epoch % 100 == 0:
+        if epoch % 1000 == 0:
             print(epoch, 'd-loss:',float(d_loss), 'g-loss:', float(g_loss))
             # 可视化
             z = tf.random.normal([100, z_dim])
             fake_image = generator(z, training=False)
+
+            if os.path.exists('gan_images'):
+                pass
+            else:
+                os.makedirs('gan_images')
+
             img_path = os.path.join('gan_images', 'gan-%d.png'%epoch)
             save_result(fake_image.numpy(), 10, img_path, color_mode='P')
 
             d_losses.append(float(d_loss))
             g_losses.append(float(g_loss))
 
-            if epoch % 10000 == 1:
-                # print(d_losses)
-                # print(g_losses)
-                generator.save_weights('generator.ckpt')
-                discriminator.save_weights('discriminator.ckpt')
+            # if epoch % 10000 == 1:
+            #     # print(d_losses)
+            #     # print(g_losses)
+            #     generator.save_weights('generator.ckpt')
+            #     discriminator.save_weights('discriminator.ckpt')
 
             
 
