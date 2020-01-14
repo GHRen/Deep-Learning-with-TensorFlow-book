@@ -6,7 +6,15 @@ from    tensorflow.keras import Sequential, layers
 from    PIL import Image
 from    matplotlib import pyplot as plt
 
-
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    # 设置GPU为增长式占用
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+  except RuntimeError as e:
+    # 打印异常
+    print(e)
 
 tf.random.set_seed(22)
 np.random.seed(22)
@@ -82,7 +90,7 @@ model.summary()
 
 optimizer = tf.optimizers.Adam(lr=lr)
 
-for epoch in range(100):
+for epoch in range(50):
 
     for step, x in enumerate(train_db):
 
@@ -111,8 +119,12 @@ for epoch in range(100):
         x_hat = tf.reshape(x_hat, [-1, 28, 28])
 
         # [b, 28, 28] => [2b, 28, 28]
-        x_concat = tf.concat([x, x_hat], axis=0)
-        x_concat = x_hat
+        x_concat = tf.concat([x[:50], x_hat[:50]], axis=0)
+
         x_concat = x_concat.numpy() * 255.
         x_concat = x_concat.astype(np.uint8)
+        if os.path.exists('ae_images'):
+            pass
+        else:
+            os.makedirs('ae_images')
         save_images(x_concat, 'ae_images/rec_epoch_%d.png'%epoch)
